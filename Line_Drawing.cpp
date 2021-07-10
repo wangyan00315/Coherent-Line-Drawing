@@ -31,13 +31,13 @@ int main(int, char** argv)
 {
     src = imread("1.jpg", IMREAD_COLOR); // 载入图片
   //  Grad(src);
-	const char* source_window = "Source";
-	namedWindow(source_window, WINDOW_AUTOSIZE);
-	imshow(source_window, src);
-
-	return 0;
+	namedWindow("Source", WINDOW_AUTOSIZE); // Create a window for display.
+	imshow("Source", src); // Show our image inside it.
+	
 	createTrackbar("Threshold:", "Source", &g_thresh, 255, on_tarckbar);
 	on_tarckbar(0, 0);
+
+	waitKey(0); // Wait for a keystroke in the window
     return 0;
 }
 
@@ -74,6 +74,8 @@ void on_tarckbar(int, void*) {
 	const char* binary = "binary";
 	namedWindow(binary, WINDOW_AUTOSIZE);
 	imshow(binary, g_binary);
+
+	waitKey(0);
 
 	vector < vector < Point > > contours;
 	vector<Vec4i> hierarchy;
