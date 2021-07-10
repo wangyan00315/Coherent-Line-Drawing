@@ -34,6 +34,8 @@ int main(int, char** argv)
 	const char* source_window = "Source";
 	namedWindow(source_window, WINDOW_AUTOSIZE);
 	imshow(source_window, src);
+
+	return 0;
 	createTrackbar("Threshold:", "Source", &g_thresh, 255, on_tarckbar);
 	on_tarckbar(0, 0);
     return 0;
@@ -68,6 +70,11 @@ void Grad(Mat src) {
 Mat g_binary;
 void on_tarckbar(int, void*) {
 	threshold(src, g_binary, g_thresh, 255, THRESH_BINARY);
+
+	const char* binary = "binary";
+	namedWindow(binary, WINDOW_AUTOSIZE);
+	imshow(binary, g_binary);
+
 	vector < vector < Point > > contours;
 	vector<Vec4i> hierarchy;
 	findContours(g_binary, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0));
