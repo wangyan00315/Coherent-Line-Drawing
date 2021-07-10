@@ -2,9 +2,12 @@
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/highgui.hpp"
 #include<cmath>
+#include<iostream>
+using namespace std;
 using namespace cv;
 
 void Grad(Mat src);
+void on_tarckbar(int, void*);
 void AnisotropicFilter(unsigned char* srcData, int width, int height, int channel, int iter, float k, float lambda, int offset);
 
 #define MIN2(a, b) ((a) < (b) ? (a) : (b))
@@ -20,13 +23,19 @@ int scale = 1;
 int delta = 0;
 int ddepth = CV_16S;
 
+int g_thresh = 100;
+
 const char* window_name = "Edge Map";
 
 int main(int, char** argv)
 {
     src = imread("1.jpg", IMREAD_COLOR); // 载入图片
-    Grad(src);
-
+  //  Grad(src);
+	const char* source_window = "Source";
+	namedWindow(source_window, WINDOW_AUTOSIZE);
+	imshow(source_window, src);
+	createTrackbar("Threshold:", "Source", &g_thresh, 255, on_tarckbar);
+	on_tarckbar(0, 0);
     return 0;
 }
 
@@ -53,6 +62,23 @@ void Grad(Mat src) {
 
     imshow(window_name, grad);
     waitKey(0);
+}
+
+/*轮廓*/
+Mat g_binary;
+void on_tarckbar(int, void*) {
+	threshold(src, g_binary, g_thresh, 255, THRESH_BINARY);
+	vector < vector < Point > > contours;
+	vector<Vec4i> hierarchy;
+	findContours(g_binary, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0));
+	Mat drawing = Mat::zeros(g_binary.size(), CV_8UC3);
+	//g_binary = Scalar::all(0);
+	for (size_t i = 0; i < contours.size(); i++)
+	{
+		drawContours(drawing, contours, (int)i, Scalar(0, 0, 255), 2, 8, hierarchy, 0, Point());
+	}
+	namedWindow("Contours", WINDOW_AUTOSIZE);
+	imshow("Contours", drawing);
 }
 
 
