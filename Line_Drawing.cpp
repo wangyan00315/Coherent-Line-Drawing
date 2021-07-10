@@ -8,6 +8,7 @@ using namespace cv;
 
 void Grad(Mat src);
 void on_tarckbar(int, void*);
+void rotateImage(Mat& src_img, Mat& des_img);
 void AnisotropicFilter(unsigned char* srcData, int width, int height, int channel, int iter, float k, float lambda, int offset);
 
 #define MIN2(a, b) ((a) < (b) ? (a) : (b))
@@ -16,6 +17,7 @@ void AnisotropicFilter(unsigned char* srcData, int width, int height, int channe
 
 Mat src, src_gray;      //定义Mat
 Mat grad;
+Mat outImg_90;
 
 int kernel_size = 5;          //内核
 
@@ -26,16 +28,19 @@ int ddepth = CV_16S;
 int g_thresh = 100;
 
 const char* window_name = "Edge Map";
+const char* source_window = "Source";
 
 int main(int, char** argv)
 {
     src = imread("1.jpg", IMREAD_COLOR); // 载入图片
-  //  Grad(src);
-	const char* source_window = "Source";
+    Grad(src);
 	namedWindow(source_window, WINDOW_AUTOSIZE);
+	//imshow(source_window, src);
+	//createTrackbar("Threshold:", "Source", &g_thresh, 255, on_tarckbar);
+	//on_tarckbar(0, 0);
+	rotateImage(src,outImg_90);
 	imshow(source_window, src);
-	createTrackbar("Threshold:", "Source", &g_thresh, 255, on_tarckbar);
-	on_tarckbar(0, 0);
+
     return 0;
 }
 
@@ -43,6 +48,8 @@ int main(int, char** argv)
 void Grad(Mat src) {
     
     cvtColor(src, src_gray, COLOR_BGR2GRAY);   //转换为灰度
+
+	blur(src_gray, src_gray, Size(3, 3));    //模糊
 
     namedWindow(window_name, WINDOW_AUTOSIZE);  //创建一个新窗口
 
@@ -81,6 +88,19 @@ void on_tarckbar(int, void*) {
 	imshow("Contours", drawing);
 }
 
+
+/*旋转*/
+void rotateImage(Mat& src_img, Mat& des_img)
+{
+	Mat img_transpose, img_flip;
+
+	transpose(src_img, img_transpose);
+	imshow("img_transpose", img_transpose);
+	waitKey(0);
+	flip(img_transpose, img_flip, 1);
+	img_flip.copyTo(des_img);
+
+}
 
 int Ws(int x, int y, double r) {
     if (x-y<r)
