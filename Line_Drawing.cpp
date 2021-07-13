@@ -6,8 +6,8 @@
 using namespace std;
 using namespace cv;
 
-void Grad(Mat src,Mat &grad);
-void on_tarckbar(int, void*);
+void GVF(const Mat& src,Mat &grad);
+//void on_tarckbar(int, void*);
 void rotateImage(Mat& src_img, Mat& des_img);
 void AnisotropicFilter(unsigned char* srcData, int width, int height, int channel, int iter, float k, float lambda, int offset);
 
@@ -15,45 +15,37 @@ void AnisotropicFilter(unsigned char* srcData, int width, int height, int channe
 #define MAX2(a, b) ((a) > (b) ? (a) : (b))
 #define CLIP3(x, a, b) MIN2(MAX2(a,x), b)
 
-int kernel_size = 5;          //内核
-int g_thresh = 100;
-
-Mat src;
+//int g_thresh = 100;
+//Mat g_src;
+int g_nor_k=100;
 
 const char* window_name = "Edge Map";
 const char* source_window = "Source";
 
 int main(int, char** argv)
 {
-	Mat src_gray,grad,r_grad,outImg_90;
-	src = imread("1.jpg", IMREAD_GRAYSCALE);
-	//imshow(source_window, src);
-    //src = imread("1.jpg", IMREAD_COLOR); // 载入图片
-    //Grad(src,grad);
+	Mat src,gvf,grad,r_grad,outImg_90;
+	//src = imread("1.jpg", IMREAD_GRAYSCALE);
+    src = imread("1.jpg", IMREAD_COLOR); // 载入图片
+    GVF(src,gvf);
 	//imshow("grad", grad);
-	//rotateImage(grad, outImg_90);
-
-	/*cvtColor(grad, r_grad, COLOR_BGR2GRAY);
-	imshow("grad2", r_grad);
-	*/
-	namedWindow(source_window, WINDOW_AUTOSIZE);
-	imshow(source_window,src);
-    createTrackbar("Threshold:","Source", &g_thresh, 255, on_tarckbar);
-	on_tarckbar(0,0);
-	
-	//imshow(source_window, src);
+	rotateImage(gvf, outImg_90);
 	waitKey(0);
     return 0;
 }
 
-/*求梯度*/
-void Grad(Mat src, Mat &grad) {
+/*求GVF*/
+void GVF(const Mat& src, Mat& gvf){
 	Mat src_gray, des_grad;
     
-   // cvtColor(src, src_gray, COLOR_BGR2GRAY);   //转换为灰度
-	//imshow("grad", src_gray);
+   cvtColor(src, src_gray, COLOR_BGR2GRAY);   //转换为灰度
+	//imshow("grad1", src_gray);
 
-	blur(src, src_gray, Size(3, 3));    //模糊
+	blur(src_gray, src_gray, Size(5, 5));    //模糊
+	//imshow("grad2", src_gray);
+
+	normalize(src_gray, src_gray, 0, g_nor_k, NORM_MINMAX, -1, Mat()); //归一化
+	//imshow("grad3", src_gray);
 
     namedWindow(window_name, WINDOW_AUTOSIZE);  //创建一个新窗口
 
@@ -75,50 +67,29 @@ void Grad(Mat src, Mat &grad) {
     addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, des_grad);
 
     imshow(window_name, des_grad);
-	des_grad.copyTo(grad);
+
+	des_grad.copyTo(gvf);
+
     waitKey(0);
-}
-
-/*轮廓*/
-
-void on_tarckbar(int, void*) {
-	Mat grad, g_binary, gthresh;
-
-	threshold(src, g_binary, g_thresh, 255, THRESH_BINARY);
-
-	const char* binary = "binary";
-	namedWindow(binary, WINDOW_AUTOSIZE);
-	imshow(binary, g_binary);
-    waitKey(0);
-
-	vector < vector < Point > > contours;
-	vector<Vec4i> hierarchy;
-	findContours(g_binary, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0));
-	Mat drawing = Mat::zeros(g_binary.size(), CV_8UC3);
-	//g_binary = Scalar::all(0);
-	for (size_t i = 0; i < contours.size(); i++)
-	{
-		drawContours(drawing, contours, (int)i, Scalar(0, 0, 255), 2, 8, hierarchy, 0, Point());
-	}
-	namedWindow("Contours", WINDOW_AUTOSIZE);
-	imshow("Contours", drawing);
 }
 
 
 /*旋转*/
-void rotateImage(Mat& src_img, Mat& des_img)
+void rotateImage(Mat& src, Mat& rotate)
 {
 	Mat img_transpose, img_flip;
-
-	transpose(src_img, img_transpose);
-	imshow("img_transpose", img_transpose);
-	waitKey(0);
+	transpose(src, img_transpose);
 	flip(img_transpose, img_flip, 1);
-	img_flip.copyTo(des_img);
+	img_flip.copyTo(rotate);
+	imshow("rotate", rotate);
+}
+
+void ETF() {
 
 }
 
-int Ws(int x, int y, double r) {
+
+int Ws(const int &x, const int &y, double r) {
     if (x-y<r)
         return 1;
     else
@@ -133,8 +104,7 @@ double Wd(double tx, double ty) {
 }
 
 int sign(double tx, double ty) {
-    double re = tx * ty;
-    if (re >= 0)
+    if (tx * ty >= 0)
         return 1;
     else
         return -1;
@@ -227,3 +197,28 @@ void AnisotropicFilter(unsigned char* srcData, int width, int height, int channe
 }
 
 
+/*轮廓*/
+
+/*void on_tarckbar(int, void*) {
+	Mat grad, g_binary, gthresh;
+
+
+
+	const char* binary = "binary";
+	namedWindow(binary, WINDOW_AUTOSIZE);
+	imshow(binary, g_binary);
+	waitKey(0);
+
+	vector < vector < Point > > contours;
+	vector<Vec4i> hierarchy;
+	findContours(g_binary, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0));
+	Mat drawing = Mat::zeros(g_binary.size(), CV_8UC3);
+	//g_binary = Scalar::all(0);
+	for (size_t i = 0; i < contours.size(); i++)
+	{
+		drawContours(drawing, contours, (int)i, Scalar(0, 0, 255), 2, 8, hierarchy, 0, Point());
+	}
+	namedWindow("Contours", WINDOW_AUTOSIZE);
+	imshow("Contours", drawing);
+}
+*/
