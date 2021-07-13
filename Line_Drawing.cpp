@@ -6,7 +6,7 @@
 using namespace std;
 using namespace cv;
 
-void Grad(Mat src);
+void Grad(Mat src,Mat &grad);
 void on_tarckbar(int, void*);
 void rotateImage(Mat& src_img, Mat& des_img);
 void AnisotropicFilter(unsigned char* srcData, int width, int height, int channel, int iter, float k, float lambda, int offset);
@@ -15,41 +15,45 @@ void AnisotropicFilter(unsigned char* srcData, int width, int height, int channe
 #define MAX2(a, b) ((a) > (b) ? (a) : (b))
 #define CLIP3(x, a, b) MIN2(MAX2(a,x), b)
 
-Mat src, src_gray;      //定义Mat
-Mat grad;
-Mat outImg_90;
-
 int kernel_size = 5;          //内核
-
-int scale = 1;
-int delta = 0;
-int ddepth = CV_16S;
-
 int g_thresh = 100;
+
+Mat src;
 
 const char* window_name = "Edge Map";
 const char* source_window = "Source";
 
 int main(int, char** argv)
 {
-    src = imread("1.jpg", IMREAD_COLOR); // 载入图片
-    Grad(src);
-	namedWindow(source_window, WINDOW_AUTOSIZE);
+	Mat src_gray,grad,r_grad,outImg_90;
+	src = imread("1.jpg", IMREAD_GRAYSCALE);
 	//imshow(source_window, src);
-	//createTrackbar("Threshold:", "Source", &g_thresh, 255, on_tarckbar);
-	//on_tarckbar(0, 0);
-	rotateImage(src,outImg_90);
-	imshow(source_window, src);
+    //src = imread("1.jpg", IMREAD_COLOR); // 载入图片
+    //Grad(src,grad);
+	//imshow("grad", grad);
+	//rotateImage(grad, outImg_90);
 
+	/*cvtColor(grad, r_grad, COLOR_BGR2GRAY);
+	imshow("grad2", r_grad);
+	*/
+	namedWindow(source_window, WINDOW_AUTOSIZE);
+	imshow(source_window,src);
+    createTrackbar("Threshold:","Source", &g_thresh, 255, on_tarckbar);
+	on_tarckbar(0,0);
+	
+	//imshow(source_window, src);
+	waitKey(0);
     return 0;
 }
 
 /*求梯度*/
-void Grad(Mat src) {
+void Grad(Mat src, Mat &grad) {
+	Mat src_gray, des_grad;
     
-    cvtColor(src, src_gray, COLOR_BGR2GRAY);   //转换为灰度
+   // cvtColor(src, src_gray, COLOR_BGR2GRAY);   //转换为灰度
+	//imshow("grad", src_gray);
 
-	blur(src_gray, src_gray, Size(3, 3));    //模糊
+	blur(src, src_gray, Size(3, 3));    //模糊
 
     namedWindow(window_name, WINDOW_AUTOSIZE);  //创建一个新窗口
 
@@ -57,6 +61,9 @@ void Grad(Mat src) {
     Mat abs_grad_x, abs_grad_y;
 
     /*在 x 和 y 方向计算“导数”*/
+	int scale = 1;
+	int delta = 0;
+	int ddepth = CV_16S;
 
     Sobel(src_gray, grad_x, ddepth, 1, 0, 3, scale, delta, BORDER_DEFAULT);
     Sobel(src_gray, grad_y, ddepth, 0, 1, 3, scale, delta, BORDER_DEFAULT);
@@ -65,16 +72,25 @@ void Grad(Mat src) {
     convertScaleAbs(grad_y, abs_grad_y);
 
     /*试图接近梯度通过将两个方向的梯度*/
-    addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, grad);
+    addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, des_grad);
 
-    imshow(window_name, grad);
+    imshow(window_name, des_grad);
+	des_grad.copyTo(grad);
     waitKey(0);
 }
 
 /*轮廓*/
-Mat g_binary;
+
 void on_tarckbar(int, void*) {
+	Mat grad, g_binary, gthresh;
+
 	threshold(src, g_binary, g_thresh, 255, THRESH_BINARY);
+
+	const char* binary = "binary";
+	namedWindow(binary, WINDOW_AUTOSIZE);
+	imshow(binary, g_binary);
+    waitKey(0);
+
 	vector < vector < Point > > contours;
 	vector<Vec4i> hierarchy;
 	findContours(g_binary, contours, hierarchy, RETR_TREE, CHAIN_APPROX_SIMPLE, Point(0, 0));
