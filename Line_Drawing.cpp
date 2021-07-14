@@ -3,24 +3,25 @@
 #include "opencv2/highgui.hpp"
 #include<cmath>
 #include<iostream>
+#include <algorithm>
 using namespace std;
 using namespace cv;
 
 void GVF(const Mat& src,Mat &grad);
 //void on_tarckbar(int, void*);
-void rotateImage(Mat& src_img, Mat& des_img);
+void rotateImage(const Mat& src_img, Mat& des_img);
 void AnisotropicFilter(unsigned char* srcData, int width, int height, int channel, int iter, float k, float lambda, int offset);
 
-#define MIN2(a, b) ((a) < (b) ? (a) : (b))
-#define MAX2(a, b) ((a) > (b) ? (a) : (b))
-#define CLIP3(x, a, b) MIN2(MAX2(a,x), b)
+// #define MIN2(a, b) ((a) < (b) ? (a) : (b))
+// #define MAX2(a, b) ((a) > (b) ? (a) : (b))
+#define CLIP3(x, a, b) std::min(std::max(a, x), b)
 
 //int g_thresh = 100;
 //Mat g_src;
 int g_nor_k=100;
 
-const char* window_name = "Edge Map";
-const char* source_window = "Source";
+// const char* window_name = "Edge Map";
+// const char* source_window = "Source";
 
 int main(int, char** argv)
 {
@@ -47,7 +48,7 @@ void GVF(const Mat& src, Mat& gvf){
 	normalize(src_gray, src_gray, 0, g_nor_k, NORM_MINMAX, -1, Mat()); //归一化
 	//imshow("grad3", src_gray);
 
-    namedWindow(window_name, WINDOW_AUTOSIZE);  //创建一个新窗口
+    namedWindow("Edge Map", WINDOW_AUTOSIZE);  //创建一个新窗口
 
     Mat grad_x, grad_y;
     Mat abs_grad_x, abs_grad_y;
@@ -66,7 +67,7 @@ void GVF(const Mat& src, Mat& gvf){
     /*试图接近梯度通过将两个方向的梯度*/
     addWeighted(abs_grad_x, 0.5, abs_grad_y, 0.5, 0, des_grad);
 
-    imshow(window_name, des_grad);
+    imshow("Grad Map", des_grad);
 
 	des_grad.copyTo(gvf);
 
@@ -75,7 +76,7 @@ void GVF(const Mat& src, Mat& gvf){
 
 
 /*旋转*/
-void rotateImage(Mat& src, Mat& rotate)
+void rotateImage(const Mat& src, Mat& rotate)
 {
 	Mat img_transpose, img_flip;
 	transpose(src, img_transpose);
@@ -152,10 +153,10 @@ void AnisotropicFilter(unsigned char* srcData, int width, int height, int channe
 				cS = MAP[SI + 255];
 				cE = MAP[EI + 255];
 				cW = MAP[WI + 255];
-				int temp = CLIP3((b + (cN + cS + cE + cW)), 0, 255);
+				int temp = CLIP3((b + (cN + cS + cE + cW)), 0.0f, 255.0f);
 				/*cout << temp << endl;
 				cout << pSrc[0] << endl;*/
-				pSrc[0] = (int)(CLIP3((b + (cN + cS + cE + cW)), 0, 255));
+				pSrc[0] = (int)(CLIP3((b + (cN + cS + cE + cW)), 0.0f, 255.0f));
 				//cout << pSrc[0] << endl;
 
 				pos_src = pos_src + 1;
@@ -172,7 +173,7 @@ void AnisotropicFilter(unsigned char* srcData, int width, int height, int channe
 				cS = MAP[SI + 255];
 				cE = MAP[EI + 255];
 				cW = MAP[WI + 255];
-				pSrc[1] = (int)(CLIP3((g + (cN + cS + cE + cW)), 0, 255));
+				pSrc[1] = (int)(CLIP3((g + (cN + cS + cE + cW)), 0.0f, 255.0f));
 
 				pos_src = pos_src + 1;
 				pos1 = pos1 + 1;
@@ -188,7 +189,7 @@ void AnisotropicFilter(unsigned char* srcData, int width, int height, int channe
 				cS = MAP[SI + 255];
 				cE = MAP[EI + 255];
 				cW = MAP[WI + 255];
-				pSrc[2] = (int)(CLIP3((r + (cN + cS + cE + cW)), 0, 255));
+				pSrc[2] = (int)(CLIP3((r + (cN + cS + cE + cW)), 0.0f, 255.0f));
 				pSrc += channel;
 			}
 		}
