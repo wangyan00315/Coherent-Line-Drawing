@@ -10,6 +10,12 @@ using namespace cv;
 void GVF(const Mat& src,Mat &grad);
 //void on_tarckbar(int, void*);
 void rotateImage(const Mat& src_img, Mat& des_img);
+void ETF(const Mat& src, const Mat& grad);
+int T_new(const Mat& src, const Mat& grad, const int& x, const int& y, int k);
+int Ws(const int& x, const int& y, double r);
+double Wm(double gradnum_x, double gradnum_y, double g);
+double Wd(double tx, double ty);
+int Sign(double tx, double ty);
 void AnisotropicFilter(unsigned char* srcData, int width, int height, int channel, int iter, float k, float lambda, int offset);
 
 // #define MIN2(a, b) ((a) < (b) ? (a) : (b))
@@ -31,6 +37,8 @@ int main(int, char** argv)
     GVF(src,gvf);
 	//imshow("grad", grad);
 	rotateImage(gvf, outImg_90);
+	//imshow("grad", outImg_90);
+	ETF(outImg_90,gvf);
 	waitKey(0);
     return 0;
 }
@@ -48,7 +56,7 @@ void GVF(const Mat& src, Mat& gvf){
 	normalize(src_gray, src_gray, 0, g_nor_k, NORM_MINMAX, -1, Mat()); //归一化
 	//imshow("grad3", src_gray);
 
-    namedWindow("Edge Map", WINDOW_AUTOSIZE);  //创建一个新窗口
+    //namedWindow("Edge Map", WINDOW_AUTOSIZE);  //创建一个新窗口
 
     Mat grad_x, grad_y;
     Mat abs_grad_x, abs_grad_y;
@@ -85,13 +93,48 @@ void rotateImage(const Mat& src, Mat& rotate)
 	imshow("rotate", rotate);
 }
 
-void ETF() {
+void ETF(const Mat& src, const Mat& grad) {
+	//Mat grayImg;
+	Mat grayImg = Mat(512, 512, CV_8U);
+	int k = 7;
 
+	//cout << src.cols << src.rows;
+	for (int x = 0; x < src.rows; x++) {
+		for (int y = 0; y < src.cols; y++) {
+			grayImg.at<uchar>(x, y) = T_new(src,grad, x, y, k);
+			//int a = grayImg.at<uchar>(x, y);
+			//cout <<a<<endl;
+		}
+	}
+	imshow("灰度图", grayImg);
+	waitKey(0);
+}
+
+int T_new(const Mat & src, const Mat& grad,const int &x, const int &y, int k) {
+	int t_new = src.at<uchar>(y, x);
+	for (int i = x - k; i <= x + k; i++) {          ///邻域
+		for (int j = y - k; j <= x + k; j++) {
+			if (x < 0 || x >= src.rows || y < 0 || y >= src.cols) continue;
+			int t_y = src.at<uchar>(y, x);
+			int t_x = src.at<uchar>(x, y);
+			double g_x = grad.at<uchar>(x, y);
+			double g_y = grad.at<uchar>(y, x);
+			int ws = Ws(x, y, k);
+			double wm = Wm(g_x, g_y,1);
+			double wd = Wd(t_x, t_y);
+			int sign = Sign(t_x, t_y);
+			//int t_new;
+			t_new += sign * t_y * ws * wm * wd;
+
+		}
+	}
+	return t_new;
 }
 
 
+
 int Ws(const int &x, const int &y, double r) {
-    if (x-y<r)
+    if (norm(x - y) <r)
         return 1;
     else
         return 0;
@@ -104,7 +147,7 @@ double Wd(double tx, double ty) {
     return fabs(tx * ty);
 }
 
-int sign(double tx, double ty) {
+int Sign(double tx, double ty) {
     if (tx * ty >= 0)
         return 1;
     else
