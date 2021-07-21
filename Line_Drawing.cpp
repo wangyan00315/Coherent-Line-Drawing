@@ -21,7 +21,11 @@ int main(int, char** argv)
 	src = cv::imread("2.jpg", cv::IMREAD_COLOR); // 载入图片
 	GVF(src, grad_x, grad_y, grad_mag);
 	Tangent(grad_x, grad_y, tan_x, tan_y);
+<<<<<<< HEAD
 	ETF(tan_x, tan_y, grad_mag, tnew_x, tnew_y);
+=======
+	ETF(tan_x, tan_y, mag_grad, tnew_x, tnew_y);
+>>>>>>> 8f1975538998397f5aaead889da4283fa11dd8b5
 	cv::waitKey(0);
 	return 0;
 }
@@ -42,10 +46,16 @@ void GVF(const cv::Mat& src, cv::Mat& grad_x, cv::Mat& grad_y,cv::Mat& grad_mag)
 	Sobel(src_gray, grad_x, CV_32F, 1, 0, 3, scale, delta, cv::BORDER_DEFAULT);
 	Sobel(src_gray, grad_y, CV_32F, 0, 1, 3, scale, delta, cv::BORDER_DEFAULT);
 
+<<<<<<< HEAD
 	magnitude(grad_x, grad_y, grad_mag);
 	cv::Mat abs_grad_mag;
 	convertScaleAbs(grad_mag, abs_grad_mag);
 	imwrite("GVF.jpg", grad_mag);
+=======
+	magnitude(grad_x, grad_y, mag_grad);
+	//convertScaleAbs(mag_grad, mag_grad);
+	imwrite("GVF.jpg", mag_grad);
+>>>>>>> 8f1975538998397f5aaead889da4283fa11dd8b5
 
 }
 
@@ -94,6 +104,7 @@ cv::Point2f ETF(const cv::Mat& tan_x, const cv::Mat& tan_y, const cv::Mat& grad_
 	for (int r = x.y - ns; r <= x.y + ns; r++) {
 		for (int c = x.x - ns; c <= x.x + ns; c++) {
 			if (r < 0 || c < 0 || r >= tan_x.rows || c >= tan_x.cols) continue;	
+<<<<<<< HEAD
 
 			cv::Point y(c, r);
 			cv::Point2f t(tan_x.at<float>(y), tan_y.at<float>(y));
@@ -103,6 +114,17 @@ cv::Point2f ETF(const cv::Mat& tan_x, const cv::Mat& tan_y, const cv::Mat& grad_
 			float wm = Wm(grad_mag, x, y);
 			sum += phi * t * ws * wd * wm;
 			k += abs(phi * ws * wd * wm);
+=======
+			
+			cv::Point2f t(tan_x.at<float>(r, c), tan_y.at<float>(r, c));
+			int phi = Phi(tan_x, tan_y, x, cv::Point(r, c));
+			/*int ws = Ws(x, cv::Point(r, c), ns);
+			float wd = Wd(tan_x, tan_y, x, cv::Point(r, c));
+			float wm = Wm(mag_grad, x, cv::Point(r, c));
+			sum += phi * t * ws * wd * wm;*/
+			sum = t;
+			k += abs(phi);
+>>>>>>> 8f1975538998397f5aaead889da4283fa11dd8b5
 		}
 	}
 	return sum/k;
@@ -116,7 +138,11 @@ void ETF(const cv::Mat& tan_x, const cv::Mat& tan_y, const cv::Mat& grad_mag, cv
 	tnew_y = cv::Mat(rows, cols, CV_32F);
 	for (int y = 0; y < rows; y++) {
 		for (int x = 0; x < cols; x++) {
+<<<<<<< HEAD
 			cv::Point2f t_new = ETF(tan_x, tan_y, grad_mag, cv::Point(x, y));
+=======
+			cv::Point2f t_new = ETF(tan_x, tan_y, mag_grad, cv::Point(y, x));
+>>>>>>> 8f1975538998397f5aaead889da4283fa11dd8b5
 			tnew_x.at<float>(y, x) = t_new.x;
 			tnew_y.at<float>(y, x) = t_new.y;
 		}
