@@ -47,6 +47,7 @@ void GVF(const cv::Mat& src, cv::Mat& grad_x, cv::Mat& grad_y,cv::Mat& grad_mag)
 	convertScaleAbs(grad_mag, abs_grad_mag);
 	imwrite("GVF.jpg", grad_mag);
 
+
 }
 
 void Tangent(const cv::Mat& grad_x, const cv::Mat& grad_y, cv::Mat& tan_x, cv::Mat& tan_y) {
