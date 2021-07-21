@@ -22,11 +22,6 @@ int main(int, char** argv)
 	GVF(src, grad_x, grad_y, mag_grad);
 	Tangent(grad_x, grad_y, tan_x, tan_y);
 	ETF(tan_x, tan_y, mag_grad, tnew_x, tnew_y);
-	//imshow("grad", gvf);
-	//rotateImage(gvf, outImg_90);
-	//imshow("grad", outImg_90);
-	//ETF(outImg_90,gvf,etf);
-	//imshow("etf", etf);
 	cv::waitKey(0);
 	return 0;
 }
@@ -48,8 +43,7 @@ void GVF(const cv::Mat& src, cv::Mat& grad_x, cv::Mat& grad_y,cv::Mat& mag_grad)
 	Sobel(src_gray, grad_y, CV_32F, 0, 1, 3, scale, delta, cv::BORDER_DEFAULT);
 
 	magnitude(grad_x, grad_y, mag_grad);
-	convertScaleAbs(mag_grad, mag_grad);
-
+	//convertScaleAbs(mag_grad, mag_grad);
 	imwrite("GVF.jpg", mag_grad);
 
 }
@@ -102,10 +96,11 @@ cv::Point2f ETF(const cv::Mat& tan_x, const cv::Mat& tan_y, const cv::Mat& mag_g
 			
 			cv::Point2f t(tan_x.at<float>(r, c), tan_y.at<float>(r, c));
 			int phi = Phi(tan_x, tan_y, x, cv::Point(r, c));
-			int ws = Ws(x, cv::Point(r, c), ns);
+			/*int ws = Ws(x, cv::Point(r, c), ns);
 			float wd = Wd(tan_x, tan_y, x, cv::Point(r, c));
 			float wm = Wm(mag_grad, x, cv::Point(r, c));
-			sum += phi * t * ws * wd * wm;
+			sum += phi * t * ws * wd * wm;*/
+			sum = t;
 			k += abs(phi);
 		}
 	}
@@ -119,7 +114,7 @@ void ETF(const cv::Mat& tan_x, const cv::Mat& tan_y, const cv::Mat& mag_grad, cv
 	tnew_y = cv::Mat(rows, cols, CV_32F);
 	for (int y = 0; y < rows; y++) {
 		for (int x = 0; x < cols; x++) {
-			cv::Point2f t_new = ETF(tan_x, tan_y, mag_grad, cv::Point(x, y));
+			cv::Point2f t_new = ETF(tan_x, tan_y, mag_grad, cv::Point(y, x));
 			tnew_x.at<float>(y, x) = t_new.x;
 			tnew_y.at<float>(y, x) = t_new.y;
 		}
