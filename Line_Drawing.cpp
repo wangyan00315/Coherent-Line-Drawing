@@ -4,12 +4,13 @@
 #include<cmath>
 #include<iostream>
 #include <algorithm>
+#include <fstream>
 
 void GVF(const cv::Mat& src, cv::Mat& grad_x, cv::Mat& grad_y, cv::Mat& grad_mag);
 void Tangent(const cv::Mat& grad_x, const cv::Mat& grad_y, cv::Mat& tan_x, cv::Mat& tan_y);
 cv::Point2f ETF(const cv::Mat& tan_x, const cv::Mat& tan_y, const cv::Mat& grad_mag, const cv::Point& x);
 void ETF(const cv::Mat& tan_x, const cv::Mat& tan_y, const cv::Mat& grad_mag, cv::Mat& tnew_x, cv::Mat& tnew_y);
-
+void Output(const std::string& filename, const cv::Mat& vx, const cv::Mat& vy);
 void AnisotropicFilter(unsigned char* srcData, int width, int height, int channel, int iter, float k, float lambda, int offset);
 
 #define CLIP3(x, a, b) std::min(std::max(a, x), b)
@@ -17,11 +18,13 @@ void AnisotropicFilter(unsigned char* srcData, int width, int height, int channe
 
 int main(int, char** argv)
 {
-	cv::Mat src, grad_x, grad_y, grad_mag, tan_x, tan_y, tnew_x, tnew_y;
+	cv::Mat src, grad_x, grad_y, grad_mag, tan_x, tan_y, tnew_x, tnew_y, tnew_x1, tnew_y1;
 	src = cv::imread("2.jpg", cv::IMREAD_COLOR); // 载入图片
 	GVF(src, grad_x, grad_y, grad_mag);
 	Tangent(grad_x, grad_y, tan_x, tan_y);
 	ETF(tan_x, tan_y, grad_mag, tnew_x, tnew_y);
+	//ETF(tnew_x, tnew_y, grad_mag, tnew_x1, tnew_y1);
+	Output("file.vecT", tnew_x, tnew_y);
 	cv::waitKey(0);
 	return 0;
 }
@@ -33,7 +36,7 @@ void GVF(const cv::Mat& src, cv::Mat& grad_x, cv::Mat& grad_y,cv::Mat& grad_mag)
 	cvtColor(src, src_gray, cv::COLOR_BGR2GRAY);   //转换为灰度
 	imwrite("gray.jpg", src_gray);
 
-	blur(src_gray, src_gray, cv::Size(3, 3));    //模糊
+	blur(src_gray, src_gray, cv::Size(1, 1));    //模糊
 
 	/*在 x 和 y 方向计算“导数”*/
 	int scale = 1;
@@ -106,6 +109,8 @@ cv::Point2f ETF(const cv::Mat& tan_x, const cv::Mat& tan_y, const cv::Mat& grad_
 			k += abs(phi * ws * wd * wm);
 		}
 	}
+	if (abs(k) <= 0.0000001)
+		return cv::Point2f(0, 0);
 	return sum/k;
 
 }
@@ -129,7 +134,18 @@ void ETF(const cv::Mat& tan_x, const cv::Mat& tan_y, const cv::Mat& grad_mag, cv
 }
 
 
+void Output(const std::string& filename, const cv::Mat& vx, const cv::Mat& vy ) {
+	std::ofstream outfile;
+	outfile.open(filename);
 
+
+	outfile << vx.rows << " " << vx.cols << std::endl;
+	for (int r = 0; r < vx.rows; r++) {
+		for (int c = 0; c < vx.cols; c++) {
+			outfile << vx.at<float>(r, c) << " " << vy.at<float>(r, c) << std::endl;
+		}
+	}	 
+}
 
 void AnisotropicFilter(unsigned char* srcData, int width, int height, int channel, int iter, float k, float lambda, int offset)
 {
